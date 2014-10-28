@@ -1,43 +1,50 @@
 //SanCoder 2014-10-27
 //TW homework: Pos_v1
 
-//Select the object from an array
-function selectObjectInArray(objectArray, key, value) {
-  for(var index in objectArray)
-    if(objectArray[index][key] == value)
-      return objectArray[index];
+//Select the object from an array.
+//if parameters without key or key == null,
+//this function treats the objectArray as an array,
+//otherwise it treats the objectArray as an dictionary.
+function selectObjectInArray(objectArray, value, key) {
+  //parameter validation
+  if(arguments.length < 2 || arguments.length > 3)
+    throw "Parameter error in function:" + /function\s+(\w+)/.exec(arguments.callee)[1];
+
+  if(arguments.length == 2 || key == null) {
+    for(var index in objectArray)
+      if(objectArray[index] == value)
+        return objectArray[index];
+  }
+  else{
+    for(var index in objectArray)
+      if(objectArray[index][key] == value)
+        return objectArray[index];
+  }
   return null;
 }
 
 //Get a shopping list with the quantity purchased.
-function getShoppingList(itemArray, barcodeList)
+function getShoppingList(itemArray, barcodeList, discountItemArray)
 {
-  var shopingList = new Array();
+  var shoppingList = new Array();
   for(var index in barcodeList) {
     var strArray = barcodeList[index].split('-');
-    var item = selectObjectInArray(itemArray, 'barcode', strArray[0]);
+    var item = selectObjectInArray(itemArray, strArray[0], 'barcode');
     var count = strArray.length > 1 ? parseInt(strArray[1], 10) : 1;
-    if(typeof(shopingList[item.barcode]) == "undefined") {
-      shopingList[item.barcode] = {'itemInfo':item,
+    if(typeof(shoppingList[item.barcode]) == "undefined") {
+      shoppingList[item.barcode] = {'itemInfo':item,
         'count':count,
         'discount':0,
         'price':0,
         'discountPrice':0,
-        'isDiscount':function(discountItemArray) {
-            for(var i in discountItemArray){
-              if(discountItemArray[i] == this.itemInfo.barcode){
-                return true;
-              }
-            }
-            return false;
-          }
-        };
-      }
-      else {
-        shopingList[item.barcode].count += count;
-      }
+        'isDiscount':selectObjectInArray(discountItemArray, item.barcode) != null
+      };
+    }
+    else {
+      shoppingList[item.barcode].count += count;
+    }
   }
-  return shopingList;
+  return shoppingList;
 }
 
 
@@ -50,9 +57,6 @@ function printInventory(barcodeList) {
   //initial output string
   var outputStr = '';
 
-  //initial shoppingList
-  var shoppingList = getShoppingList(loadAllItems(), barcodeList);
-
   //initial discountList
   var discountList;
   var blocks = loadPromotions();
@@ -63,6 +67,9 @@ function printInventory(barcodeList) {
     }
   }
 
+  //initial shoppingList
+  var shoppingList = getShoppingList(loadAllItems(), barcodeList, discountList);
+
   outputStr += '***<没钱赚商店>购物清单***\n';
 
   //goods traversal, statistics count
@@ -71,7 +78,7 @@ function printInventory(barcodeList) {
   var discountStr = '----------------------\n挥泪赠送商品：\n';
   for(var i in shoppingList) {
     var item = shoppingList[i];
-    if(item.isDiscount(discountList))
+    if(item.isDiscount)
       item.discount = Math.floor(item.count / 3);
     item.discountPrice = item.discount * item.itemInfo.price;
     item.price = item.count * item.itemInfo.price - item.discountPrice;
