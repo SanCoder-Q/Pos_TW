@@ -1,5 +1,19 @@
-//SanCoder 2014-10-27
+//SanCoder 2014-10-28
 //TW homework: Pos_v1
+
+//validate the parameter(s).
+//The number of parameters can be any value,
+//and if there is only one parameter, it is treated as a parameter array.
+function nullValidate() {
+  if(arguments.length == 1)
+    for(var i in arguments[0])
+      if(arguments[0][i] == null)
+        throw "NullValidate: Parameter cannot be null in function:" + /function\s+(\w+)/.exec(arguments.callee.caller)[1];
+  else
+    for(var i in arguments)
+      if(arguments[i] == null)
+        throw "NullValidate: Parameter cannot be null in function:" + /function\s+(\w+)/.exec(arguments.callee.caller)[1];
+}
 
 //Select the object from an array.
 //if parameters without key or key == null,
@@ -7,6 +21,8 @@
 //otherwise it treats the objectArray as an dictionary.
 function selectObjectInArray(objectArray, value, key) {
   //parameter validation
+  nullValidate(objectArray, value);
+
   if(arguments.length < 2 || arguments.length > 3)
     throw "Parameter error in function:" + /function\s+(\w+)/.exec(arguments.callee)[1];
 
@@ -24,8 +40,10 @@ function selectObjectInArray(objectArray, value, key) {
 }
 
 //Get a shopping list with the quantity purchased.
-function getShoppingList(itemArray, barcodeList, discountItemArray)
-{
+function getShoppingList(itemArray, barcodeList, discountItemArray) {
+  //parameter validation
+  nullValidate(arguments);
+
   var shoppingList = new Array();
 
   //Initial the shoppingList
@@ -64,7 +82,7 @@ function getShoppingList(itemArray, barcodeList, discountItemArray)
 //output
 function printInventory(barcodeList) {
   //parameter validation
-
+  nullValidate(arguments);
 
   //initial output string
   var outputStr = '';
