@@ -27,6 +27,8 @@ function selectObjectInArray(objectArray, value, key) {
 function getShoppingList(itemArray, barcodeList, discountItemArray)
 {
   var shoppingList = new Array();
+
+  //Initial the shoppingList
   for(var index in barcodeList) {
     var strArray = barcodeList[index].split('-');
     var item = selectObjectInArray(itemArray, strArray[0], 'barcode');
@@ -44,6 +46,16 @@ function getShoppingList(itemArray, barcodeList, discountItemArray)
       shoppingList[item.barcode].count += count;
     }
   }
+
+  //Counting every item price and discount
+  for(var index in shoppingList) {
+    var item = shoppingList[index];
+    if(item.isDiscount)
+      item.discount = Math.floor(item.count / 3);
+    item.discountPrice = item.discount * item.itemInfo.price;
+    item.price = item.count * item.itemInfo.price - item.discountPrice;
+  }
+
   return shoppingList;
 }
 
@@ -74,16 +86,12 @@ function printInventory(barcodeList) {
 
   //goods traversal, statistics count
   var sumPrice = 0;
-  var discountPrice = 0;
+  var sumDiscount = 0;
   var discountStr = '----------------------\n挥泪赠送商品：\n';
   for(var i in shoppingList) {
     var item = shoppingList[i];
-    if(item.isDiscount)
-      item.discount = Math.floor(item.count / 3);
-    item.discountPrice = item.discount * item.itemInfo.price;
-    item.price = item.count * item.itemInfo.price - item.discountPrice;
     sumPrice += item.price;
-    discountPrice += item.discountPrice;
+    sumDiscount += item.discountPrice;
     outputStr += '名称：' + item.itemInfo.name + '，数量：' + item.count + item.itemInfo.unit + '，单价：' + item.itemInfo.price.toFixed(2) + '(元)，小计：' + item.price.toFixed(2) + '(元)\n';
     if(item.discount > 0)
       discountStr += '名称：' + item.itemInfo.name + '，数量：' + item.discount + item.itemInfo.unit + '\n';
@@ -93,7 +101,7 @@ function printInventory(barcodeList) {
 
   outputStr += '----------------------\n';
   outputStr += '总计：' + sumPrice.toFixed(2) + '(元)\n';
-  outputStr += '节省：' + discountPrice.toFixed(2) + '(元)\n';
+  outputStr += '节省：' + sumDiscount.toFixed(2) + '(元)\n';
   outputStr += '**********************';
   console.log(outputStr);
   //statistics
