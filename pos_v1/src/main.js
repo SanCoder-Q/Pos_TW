@@ -14,11 +14,25 @@ Util.Validate = (function(){
       if(arguments.length == 1)
         for(var i in arguments[0])
           if(arguments[0][i] == null)
-            throw "NullValidate: Parameter cannot be null in function:" + /function\s+(\w+)/.exec(arguments.callee.caller)[1];
+            throw "NullValidate: Parameter cannot be null in function: " + /function\s+(\w+)/.exec(arguments.callee.caller)[1];
       else
         for(var i in arguments)
           if(arguments[i] == null)
-            throw "NullValidate: Parameter cannot be null in function:" + /function\s+(\w+)/.exec(arguments.callee.caller)[1];
+            throw "NullValidate: Parameter cannot be null in function: " + /function\s+(\w+)/.exec(arguments.callee.caller)[1];
+    },
+    //validate the number of parameters
+    //The first parameter must be the 'arguments' object of the caller,
+    //the second and the third parameters are the minimum and maximum of the expected parameter number of the caller.
+    //if there is no upbound of the parameter number, make the maxNum = Infinity.
+    //if use this method with two parameters, the second parameters would be treated as not only minNum but also maxNum.
+    paraNumValidate: function(args, minNum, maxNum) {
+      if(arguments.length != 3 && arguments.length != 2)
+        throw "ParaNumValidate: Parameter number error in function: Util.Validate.paraNumValidate";
+      this.nullValidate(arguments);
+      if(arguments.length == 2)
+        maxNum = minNum;
+      if(args.length < minNum || args.length > maxNum)
+        throw "ParaNumValidate: Parameter number error in function: " + /function\s+(\w+)/.exec(arguments.callee.caller)[1];
     },
   };
   //pravite:
@@ -30,6 +44,7 @@ Util.Validate = (function(){
 function ShoppingCart(itemArray, barcodeList, discountItemArray) {
 
   //parameter validation
+  Util.Validate.paraNumValidate(arguments, 3);
   Util.Validate.nullValidate(arguments);
 
   //#private field:
@@ -88,11 +103,10 @@ function ShoppingCart(itemArray, barcodeList, discountItemArray) {
   //otherwise it treats the objectArray as an dictionary.
   function selectObjectInArray(objectArray, value, key) {
     //parameter validation
+    Util.Validate.paraNumValidate(arguments, 2, 3);
     Util.Validate.nullValidate(objectArray, value);
 
-    if(arguments.length < 2 || arguments.length > 3)
-      throw "Parameter error in function:" + /function\s+(\w+)/.exec(arguments.callee)[1];
-
+    //overload the method
     if(arguments.length == 2 || key == null) {
       for(var i in objectArray)
         if(objectArray[i] == value)
@@ -115,6 +129,7 @@ function ShoppingCart(itemArray, barcodeList, discountItemArray) {
 //output
 function printInventory(barcodeList) {
   //parameter validation
+  Util.Validate.paraNumValidate(arguments, 1, 1);
   Util.Validate.nullValidate(arguments);
 
   //initial output string
