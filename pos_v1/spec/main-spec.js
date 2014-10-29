@@ -17,6 +17,45 @@ describe('pos', function () {
         ];
     });
 
+    it('Util.Validate.nullValidate_OneNull_Thrown', function(){
+      expect(function(){Util.Validate.nullValidate(null);}).toThrow();
+    });
+
+    it('Util.Validate.nullValidate_OneUndifined_Thrown', function(){
+      expect(function(){Util.Validate.nullValidate(undifined);}).toThrow();
+    });
+
+    it('Util.Validate.nullValidate_ThreeNull_Thrown', function(){
+      expect(function(){Util.Validate.nullValidate(null,1,'test');}).toThrow();
+    });
+
+    it('Util.Validate.nullValidate_ArgumentsWithOneNullIn_Thrown', function(){
+      expect(function(){
+        var argsMock = [null,1,'test'];
+        argMock.callee = this;
+        Util.Validate.nullValidate(argsMock);
+      }).toThrow();
+    });
+
+    it('Util.Validate.paraNumValidate_argsEqNull_Thrown', function(){
+      expect(function(){Util.Validate.paraNumValidate(null,1,2);}).toThrow();
+    });
+
+    it('Util.Validate.paraNumValidate_CorrectPara_Thrown', function(){
+      var argsMock = [null,1,'test'];
+      expect(function(){Util.Validate.paraNumValidate(argsMock,3);}).not.toThrow();
+      expect(function(){Util.Validate.paraNumValidate(argsMock,3,3);}).not.toThrow();
+      expect(function(){Util.Validate.paraNumValidate(argsMock,3,Infinity);}).not.toThrow();
+    });
+
+    it('Util.Validate.paraNumValidate_WrongPara_Thrown', function(){
+      var argsMock = [null,1,'test'];
+      expect(function(){Util.Validate.paraNumValidate(argsMock,1,2);}).toThrow();
+      expect(function(){Util.Validate.paraNumValidate(argsMock,3,2);}).toThrow();
+      expect(function(){Util.Validate.paraNumValidate(argsMock,Infinity,2);}).toThrow();
+      expect(function(){Util.Validate.paraNumValidate(argsMock,2);}).toThrow();
+    });
+
     it('should print correct text', function () {
 
         spyOn(console, 'log');
@@ -39,4 +78,5 @@ describe('pos', function () {
 
           expect(console.log).toHaveBeenCalledWith(expectText);
     });
+
 });

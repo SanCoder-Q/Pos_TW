@@ -11,14 +11,16 @@ Util.Validate = (function(){
     //The number of parameters can be any value,
     //and if there is only one parameter, it is treated as a parameter array.
     nullValidate: function() {
-      if(arguments.length == 1)
+      if(arguments.length == 1 && arguments[0].callee != null) {
         for(var i in arguments[0])
           if(arguments[0][i] == null)
             throw "NullValidate: Parameter cannot be null in function: " + /function\s+(\w+)/.exec(arguments.callee.caller)[1];
-      else
+      }
+      else {
         for(var i in arguments)
           if(arguments[i] == null)
             throw "NullValidate: Parameter cannot be null in function: " + /function\s+(\w+)/.exec(arguments.callee.caller)[1];
+      }
     },
     //validate the number of parameters
     //The first parameter must be the 'arguments' object of the caller,
@@ -31,6 +33,8 @@ Util.Validate = (function(){
       this.nullValidate(arguments);
       if(arguments.length == 2)
         maxNum = minNum;
+      if(minNum > maxNum)
+        throw "ParaNumValidate: Parameter number error in function: Util.Validate.paraNumValidate";
       if(args.length < minNum || args.length > maxNum)
         throw "ParaNumValidate: Parameter number error in function: " + /function\s+(\w+)/.exec(arguments.callee.caller)[1];
     },
