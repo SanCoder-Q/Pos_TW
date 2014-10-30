@@ -144,7 +144,7 @@ function PromotionInfo() {
   var _promotions = loadPromotions();
 
   //#public method:
-  this.getPromotionItemList = function(promotionTypeStr) {
+  this.getItemListOfAPromotion = function(promotionTypeStr) {
     //parameter validation
     Util.Validate.paraNumValidate(arguments, 1);
     Util.Validate.nullValidate(arguments);
@@ -170,7 +170,7 @@ function printInventory(barcodeList) {
 
   //initial discountList
   var promotionInfo = new PromotionInfo();
-  var discountList = promotionInfo.getPromotionItemList('BUY_TWO_GET_ONE_FREE');
+  var discountList = promotionInfo.getItemListOfAPromotion('BUY_TWO_GET_ONE_FREE');
 
   //initial shoppingList
   var shoppingCart = new ShoppingCart(barcodeList, discountList);
