@@ -1,10 +1,25 @@
 //SanCoder 2014-10-29
 //TW homework: Pos_v1
 
+//deep clone
+Object.clone = function(obj) {
+  var objClone = {};
+  if(typeof obj !== "object")
+    return obj;
+  if(obj.constructor == Array)
+    objClone = [];
+  for(var i in obj) {
+    objClone[i] = Object.clone(obj[i]);
+  }
+  return objClone;
+}
+
 var Util = {};
 
 //static class for validate
 Util.Validate = (function(){
+  //pravite:
+
   var publicReturn = {
     //public:
     //validate the parameter(s).
@@ -39,8 +54,45 @@ Util.Validate = (function(){
         throw "ParaNumValidate: Parameter number error in function: " + /function\s+(\w+)/.exec(arguments.callee.caller)[1];
     },
   };
-  //pravite:
+  return publicReturn;
+})();
 
+
+var Mall = {};
+
+//static class for product manager
+Mall.ItemManager = (function(){
+  //pravite:
+  var _itemList = loadAllItems();
+  var publicReturn = {
+    //public:
+    getItemList: function(){
+      return Object.clone(_itemList);
+    },
+  };
+  return publicReturn;
+})();
+
+//static class for promotion manager
+Mall.PromotionManager = (function(){
+//pravite:
+  var _promotions = loadPromotions();
+  var publicReturn = {
+    //#public method:
+    getItemListOfAPromotion:function(promotionTypeStr) {
+      //parameter validation
+      Util.Validate.paraNumValidate(arguments, 1);
+      Util.Validate.nullValidate(arguments);
+
+      for(var i in _promotions) {
+        var promotion = _promotions[i];
+        if(promotion.type == promotionTypeStr)
+          return promotion.barcodes;
+      }
+
+      throw "Wrong promotion type: " + promotionTypeStr;
+    },
+  };
   return publicReturn;
 })();
 
@@ -52,7 +104,7 @@ function ShoppingCart(barcodeList, discountItemArray) {
   Util.Validate.nullValidate(arguments);
 
   //#private field:
-  var _itemList = loadAllItems();
+  var _itemList = Mall.ItemManager.getItemList();
   var _shoppingList = new Array(); //a dictionary with the barcode is the key
   var _sumPrice = 0;
   var _sumDiscount = 0;
@@ -138,27 +190,6 @@ function ShoppingCart(barcodeList, discountItemArray) {
   countPrice();
 }
 
-//PromotionInfo class
-function PromotionInfo() {
-  //#private field:
-  var _promotions = loadPromotions();
-
-  //#public method:
-  this.getItemListOfAPromotion = function(promotionTypeStr) {
-    //parameter validation
-    Util.Validate.paraNumValidate(arguments, 1);
-    Util.Validate.nullValidate(arguments);
-
-    for(var i in _promotions) {
-      var promotion = _promotions[i];
-      if(promotion.type == promotionTypeStr)
-        return promotion.barcodes;
-    }
-
-    throw "Wrong promotion type: " + promotionTypeStr;
-  };
-}
-
 //output
 function printInventory(barcodeList) {
   //parameter validation
@@ -169,8 +200,7 @@ function printInventory(barcodeList) {
   var outputStr = '';
 
   //initial discountList
-  var promotionInfo = new PromotionInfo();
-  var discountList = promotionInfo.getItemListOfAPromotion('BUY_TWO_GET_ONE_FREE');
+  var discountList = Mall.PromotionManager.getItemListOfAPromotion('BUY_TWO_GET_ONE_FREE');
 
   //initial shoppingList
   var shoppingCart = new ShoppingCart(barcodeList, discountList);
