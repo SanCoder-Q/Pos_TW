@@ -211,6 +211,28 @@ Mall.PromotionManager = (function(){
   return publicReturn;
 })();
 
+//static class for shopping manager
+Mall.ShoppingManager = (function(){
+  //pravite:
+  var _currentShoppingCart = null;
+  var publicReturn = {
+    //public:
+    initShoppingCart: function(barcodeList){
+      //parameter validation
+      Util.Validate.paraNumValidate(arguments, 1);
+      Util.Validate.nullValidate(arguments);
+
+      if(_currentShoppingCart == null)
+        _currentShoppingCart = new ShoppingCart(barcodeList);
+    },
+
+    getCurrentShoppingCart: function(){
+      return _currentShoppingCart;
+    }
+  };
+  return publicReturn;
+})();
+
 //promotion type enumeration
 Mall.PromotionManager.PromotionTypeEnum = {
   //整体价格条件
@@ -333,36 +355,86 @@ function ShoppingCart(barcodeList) {
   Mall.PromotionManager.countPrice(this);
 }
 
+//Invertory class
+function Inventory(shoppingCart) {
+  //parameter validation
+  Util.Validate.paraNumValidate(arguments, 1);
+  Util.Validate.nullValidate(arguments);
+  Util.Validate.classValidate(shoppingCart, ShoppingCart);
+
+  //private field
+  var _shoppingCart = shoppingCart;
+  var _shopName = '没钱赚商店';
+  var _outputStr = '';
+
+  //public method
+  this.printTitle = function() {
+    _outputStr += '***<' + _shopName + '>购物清单***\n';
+  };
+
+  this.printDivider = function() {
+    _outputStr += '----------------------\n';
+  };
+
+  this.printEndLine = function() {
+    _outputStr += '**********************';
+  };
+
+  this.printPromotionTitle = function() {
+    _outputStr += '挥泪赠送商品：\n';
+  };
+
+  this.printItemPart = function() {
+    var shoppingList = _shoppingCart.getShoppingList();
+    for(var i in shoppingList) {
+      var itemClass = shoppingList[i];
+      _outputStr +=
+        '名称：' + itemClass.itemInfo.name +
+        '，数量：' + itemClass.items.length + itemClass.itemInfo.unit +
+        '，单价：' + itemClass.itemInfo.price.toFixed(2) +
+        '(元)，小计：' + itemClass.price.toFixed(2) + '(元)\n';
+    }
+  };
+
+  this.printPromotionPart = function() {
+    var shoppingList = _shoppingCart.getShoppingList();
+    for(var i in shoppingList) {
+      var itemClass = shoppingList[i];
+      if(itemClass.discount > 0)
+        _outputStr +=
+          '名称：' + itemClass.itemInfo.name +
+          '，数量：' + itemClass.discount + itemClass.itemInfo.unit + '\n';
+    }
+  };
+
+  this.printSummationPart = function() {
+    _outputStr += '总计：' + _shoppingCart.getSumPrice().toFixed(2) + '(元)\n';
+    _outputStr += '节省：' + _shoppingCart.getSumDiscount().toFixed(2) + '(元)\n';
+  };
+
+  this.getOutput = function() {
+    return _outputStr;
+  };
+}
+
 //output
 function printInventory(barcodeList) {
   //parameter validation
   Util.Validate.paraNumValidate(arguments, 1);
   Util.Validate.nullValidate(arguments);
 
-  //initial output string
-  var outputStr = '';
+  Mall.ShoppingManager.initShoppingCart(barcodeList);
+  var inventory = new Inventory(Mall.ShoppingManager.getCurrentShoppingCart());
 
-  //initial shoppingList
-  var shoppingCart = new ShoppingCart(barcodeList);
+  inventory.printTitle();
+  inventory.printItemPart();
+  inventory.printDivider();
+  inventory.printPromotionTitle();
+  inventory.printPromotionPart();
+  inventory.printDivider();
+  inventory.printSummationPart();
+  inventory.printEndLine();
 
-  var shoppingList = shoppingCart.getShoppingList();
-
-  outputStr += '***<没钱赚商店>购物清单***\n';
-
-  //goods traversal, statistics count
-  var discountStr = '----------------------\n挥泪赠送商品：\n';
-  for(var i in shoppingList) {
-    var itemClass = shoppingList[i];
-    outputStr += '名称：' + itemClass.itemInfo.name + '，数量：' + itemClass.items.length + itemClass.itemInfo.unit + '，单价：' + itemClass.itemInfo.price.toFixed(2) + '(元)，小计：' + itemClass.price.toFixed(2) + '(元)\n';
-    if(itemClass.discount > 0)
-      discountStr += '名称：' + itemClass.itemInfo.name + '，数量：' + itemClass.discount + itemClass.itemInfo.unit + '\n';
-  }
-
-  outputStr += discountStr;
-  outputStr += '----------------------\n';
-  outputStr += '总计：' + shoppingCart.getSumPrice().toFixed(2) + '(元)\n';
-  outputStr += '节省：' + shoppingCart.getSumDiscount().toFixed(2) + '(元)\n';
-  outputStr += '**********************';
-  console.log(outputStr);
+  console.log(inventory.getOutput());
   //statistics
 }
