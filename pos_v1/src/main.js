@@ -82,7 +82,7 @@ Util.Validate = (function(){
       this.nullValidate(arguments);
       if(!(obj instanceof expectClass))
         throw "ClassValidate: The object is not an instance of the expect class in funciton: " + /function\s+(\w+)/.exec(arguments.callee.caller)[1];
-    },
+    }
   };
   return publicReturn;
 })();
@@ -104,8 +104,8 @@ Mall.ItemManager = (function(){
       Util.Validate.paraNumValidate(arguments, 1);
       Util.Validate.nullValidate(arguments);
 
-      return null == Array.selectObjectInArray(_itemList, barcodeStr, 'barcode');
-    },
+      return null != Array.selectObjectInArray(_itemList, barcodeStr, 'barcode');
+    }
   };
   return publicReturn;
 })();
@@ -139,11 +139,38 @@ Mall.PromotionManager = (function(){
 
       var promotionList = [];
       for(var i in _promotions) {
-        if(Array.selectObjectInArray(_promotions[i].barcodes, itemBarcodeStr != null)) {
-          promotionList.push(_promotions[i].type);
+        if(Array.selectObjectInArray(_promotions[i].barcodes, itemBarcodeStr) != null) {
+          //未来应从工厂获取促销对象，应含有此处暂时由new代替
+          promotionList.push(new Promotion(_promotions[i].type,
+            Mall.PromotionManager.PromotionTypeEnum.GoodNumSpecificGood,
+            Infinity,
+            function(itemClass){
+              //parameter validation
+              Util.Validate.paraNumValidate(arguments, 1);
+              Util.Validate.nullValidate(arguments);
+              //计算该品种商品未参加活动的商品数量
+              var noDiscountCount = 0;
+              for(var j in itemClass.items)
+                if(itemClass.items[j].discount == 0)
+                  noDiscountCount++;
+              //计算赠送数量及更新品类价格信息
+              var discountNum = Math.floor(noDiscountCount / 3);
+              itemClass.discount += discountNum;
+              itemClass.price -= itemClass.itemInfo.price * itemClass.discount;
+              for(var j = 0; j < discountNum; j++) {
+                if(j >= itemClass.items.length)
+                  throw "Promotion price calculation error";
+                if(itemClass.items[j].discount != 0) {
+                  discountNum++;
+                  continue;
+                }
+                itemClass.items[j].discount = itemClass.itemInfo.price;
+                itemClass.items[j].price -= itemClass.items[j].discount;
+              }
+            }
+          ));
         }
       }
-
       return promotionList;
     },
 
@@ -158,26 +185,92 @@ Mall.PromotionManager = (function(){
       var sumPrice = 0;
       var sumDiscount = 0;
       for(var i in shoppingList) {
-        var item = shoppingList[i];
-        if(item.isDiscount)
-          item.discount = Math.floor(item.count / 3);
-        item.discountPrice = item.discount * item.itemInfo.price;
-        item.price = item.count * item.itemInfo.price - item.discountPrice;
-        sumPrice += item.price;
-        sumDiscount += item.discountPrice;
+        var itemClass = shoppingList[i];
+        //get all promotion of the item
+        var promotionList = this.getPromotionListofAnItem(i);
+
+        //遍历所有促销，更新价格。PS：没有促销优先级的情况下，直接遍历促销活动，有优先级应先排序促销活动，再进行遍历。
+        for(var j in promotionList) {
+          var promotion = promotionList[j];
+          switch(promotion.type) {
+            case Mall.PromotionManager.PromotionTypeEnum.GoodNumSpecificGood:
+              //该类型促销计算参数为itemClass
+              promotion.countPrice(itemClass);
+              break;
+            default:
+              throw "Promotion type error";
+          }
+        }
+        sumPrice += itemClass.price;
+        sumDiscount += itemClass.originPrice - itemClass.price;
       }
       shoppingCart.setSumPrice(sumPrice);
       shoppingCart.setSumDiscount(sumDiscount);
-    },
+    }
   };
   return publicReturn;
 })();
 
-//ShoppingCart class
-function ShoppingCart(barcodeList, discountItemArray) {
+//promotion type enumeration
+Mall.PromotionManager.PromotionTypeEnum = {
+  //整体价格条件
+  EntiretyPercentEntirety     :0x00010001,  //整体折扣
+  EntiretyOffEntirety         :0x00010002,  //整体满减
+  //整体价格条件赠折
+  EntiretyOffSpecificGood     :0x00020001,  //整体满赠/折指定物品，非指定的或品类制定的应给出选择商品用户接口
+  //品类价格条件
+  ClassPercentClass           :0x00030001,  //品类折扣
+  ClassOffClass               :0x00030002,  //品类满减
+  //品类价格条件赠折
+  ClassOffSpecificGood        :0x00040001,  //品类满赠/折指定物品，非指定的或品类制定的应给出选择商品用户接口
+  //单类价格条件
+  GoodPricePercentGood        :0x00050001,
+  GoodPriceOffGood            :0x00050002,
+  //单类价格条件增折
+  GoodPriceSpecificGood       :0x00060001,
+  //单类数量条件
+  GoodNumPercentGood          :0x00070001,
+  GoodNumOffGood              :0x00070002,
+  //单类数量条件增折
+  GoodNumSpecificGood         :0x00080001
+};
 
+//Promotion class
+function Promotion(promotionStr, promotionType, promotionPriority, countPriceCallBack) {
+  //parameter validation
+  Util.Validate.paraNumValidate(arguments, 4);
+  Util.Validate.nullValidate(arguments);
+  Util.Validate.classValidate(countPriceCallBack, Function);
+
+  //#public property:
+  this.name = promotionStr;
+  this.type = promotionType;
+  this.priority = promotionPriority;
+  //#public method:
+  this.countPrice = countPriceCallBack; //parameter is a itemClass in ShoppingCart
+}
+
+
+//Item class
+function Item(itemInfo, itemID) {
   //parameter validation
   Util.Validate.paraNumValidate(arguments, 2);
+  Util.Validate.nullValidate(arguments);
+
+  //#public property:
+  this.itemID = itemID;
+  this.itemInfo = itemInfo;
+  this.originPrice = itemInfo.price;
+  this.price = itemInfo.price;
+  this.discount = 0;
+  this.relatedPromotionList = [];
+}
+
+//ShoppingCart class
+function ShoppingCart(barcodeList) {
+
+  //parameter validation
+  Util.Validate.paraNumValidate(arguments, 1);
   Util.Validate.nullValidate(arguments);
 
   //#private field:
@@ -207,22 +300,31 @@ function ShoppingCart(barcodeList, discountItemArray) {
   //initialize the _shoppingList
   function initialize() {
     //Initial the shoppingList
+    var itemID = 0;
     for(var i in barcodeList) {
       var strArray = barcodeList[i].split('-');
-      var item = Array.selectObjectInArray(_itemList, strArray[0], 'barcode');
+      var itemInfo = Array.selectObjectInArray(_itemList, strArray[0], 'barcode');
       var count = strArray.length > 1 ? parseInt(strArray[1], 10) : 1;
-      if(typeof(_shoppingList[item.barcode]) == "undefined") {
-        _shoppingList[item.barcode] = {'itemInfo':item,
-          'count':count,
+      if(typeof(_shoppingList[itemInfo.barcode]) == "undefined") {
+        _shoppingList[itemInfo.barcode] = {'itemInfo':itemInfo,
+          'given':0,
+          'originPrice':count * itemInfo.price,
+          'price':count * itemInfo.price,
           'discount':0,
-          'price':0,
-          'discountPrice':0,
-          'isDiscount':Array.selectObjectInArray(discountItemArray, item.barcode) != null
+          'items':[],
         };
       }
       else {
-        _shoppingList[item.barcode].count += count;
+        _shoppingList[itemInfo.barcode].price += itemInfo.price * count;
+        _shoppingList[itemInfo.barcode].originPrice += itemInfo.price * count;
       }
+
+      for(var j=0; j< count; j++) {
+        var item = new Item(itemInfo, itemID);
+        _shoppingList[itemInfo.barcode].items.push(item);
+        itemID++;
+      }
+
     }
   }
 
@@ -240,11 +342,9 @@ function printInventory(barcodeList) {
   //initial output string
   var outputStr = '';
 
-  //initial discountList
-  var discountList = Mall.PromotionManager.getItemListOfAPromotion('BUY_TWO_GET_ONE_FREE');
-
   //initial shoppingList
-  var shoppingCart = new ShoppingCart(barcodeList, discountList);
+  var shoppingCart = new ShoppingCart(barcodeList);
+
   var shoppingList = shoppingCart.getShoppingList();
 
   outputStr += '***<没钱赚商店>购物清单***\n';
@@ -252,10 +352,10 @@ function printInventory(barcodeList) {
   //goods traversal, statistics count
   var discountStr = '----------------------\n挥泪赠送商品：\n';
   for(var i in shoppingList) {
-    var item = shoppingList[i];
-    outputStr += '名称：' + item.itemInfo.name + '，数量：' + item.count + item.itemInfo.unit + '，单价：' + item.itemInfo.price.toFixed(2) + '(元)，小计：' + item.price.toFixed(2) + '(元)\n';
-    if(item.discount > 0)
-      discountStr += '名称：' + item.itemInfo.name + '，数量：' + item.discount + item.itemInfo.unit + '\n';
+    var itemClass = shoppingList[i];
+    outputStr += '名称：' + itemClass.itemInfo.name + '，数量：' + itemClass.items.length + itemClass.itemInfo.unit + '，单价：' + itemClass.itemInfo.price.toFixed(2) + '(元)，小计：' + itemClass.price.toFixed(2) + '(元)\n';
+    if(itemClass.discount > 0)
+      discountStr += '名称：' + itemClass.itemInfo.name + '，数量：' + itemClass.discount + itemClass.itemInfo.unit + '\n';
   }
 
   outputStr += discountStr;
