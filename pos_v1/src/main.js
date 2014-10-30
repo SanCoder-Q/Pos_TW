@@ -129,25 +129,39 @@ function ShoppingCart(itemArray, barcodeList, discountItemArray) {
   countPrice();
 }
 
+//PromotionInfo class
+function PromotionInfo() {
+  //#private field:
+  var _promotions = loadPromotions();
+
+  //#public method:
+  this.getPromotionItemList = function(promotionTypeStr) {
+    //parameter validation
+    Util.Validate.paraNumValidate(arguments, 1);
+    Util.Validate.nullValidate(arguments);
+
+    for(var i in _promotions) {
+      var promotion = _promotions[i];
+      if(promotion.type == promotionTypeStr)
+        return promotion.barcodes;
+    }
+
+    throw "Wrong promotion type: " + promotionTypeStr;
+  };
+}
 
 //output
 function printInventory(barcodeList) {
   //parameter validation
-  Util.Validate.paraNumValidate(arguments, 1, 1);
+  Util.Validate.paraNumValidate(arguments, 1);
   Util.Validate.nullValidate(arguments);
 
   //initial output string
   var outputStr = '';
 
   //initial discountList
-  var discountList;
-  var blocks = loadPromotions();
-  for(var i in blocks) {
-    if(blocks[i].type == 'BUY_TWO_GET_ONE_FREE') {
-      discountList = blocks[i].barcodes;
-      break;
-    }
-  }
+  var promotionInfo = new PromotionInfo();
+  var discountList = promotionInfo.getPromotionItemList('BUY_TWO_GET_ONE_FREE');
 
   //initial shoppingList
   var shoppingCart = new ShoppingCart(loadAllItems(), barcodeList, discountList);
