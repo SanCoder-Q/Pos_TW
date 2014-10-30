@@ -45,13 +45,14 @@ Util.Validate = (function(){
 })();
 
 //ShoppingCart class
-function ShoppingCart(itemArray, barcodeList, discountItemArray) {
+function ShoppingCart(barcodeList, discountItemArray) {
 
   //parameter validation
-  Util.Validate.paraNumValidate(arguments, 3);
+  Util.Validate.paraNumValidate(arguments, 2);
   Util.Validate.nullValidate(arguments);
 
   //#private field:
+  var _itemList = loadAllItems();
   var _shoppingList = new Array(); //a dictionary with the barcode is the key
   var _sumPrice = 0;
   var _sumDiscount = 0;
@@ -66,7 +67,7 @@ function ShoppingCart(itemArray, barcodeList, discountItemArray) {
     Util.Validate.paraNumValidate(arguments, 1);
     Util.Validate.nullValidate(arguments);
 
-    return null == selectObjectInArray(itemArray, barcodeStr, 'barcode');
+    return null == selectObjectInArray(_itemList, barcodeStr, 'barcode');
   };
 
   //#private method:
@@ -79,7 +80,7 @@ function ShoppingCart(itemArray, barcodeList, discountItemArray) {
     //Initial the shoppingList
     for(var i in barcodeList) {
       var strArray = barcodeList[i].split('-');
-      var item = selectObjectInArray(itemArray, strArray[0], 'barcode');
+      var item = selectObjectInArray(_itemList, strArray[0], 'barcode');
       var count = strArray.length > 1 ? parseInt(strArray[1], 10) : 1;
       if(typeof(_shoppingList[item.barcode]) == "undefined") {
         _shoppingList[item.barcode] = {'itemInfo':item,
@@ -172,7 +173,7 @@ function printInventory(barcodeList) {
   var discountList = promotionInfo.getPromotionItemList('BUY_TWO_GET_ONE_FREE');
 
   //initial shoppingList
-  var shoppingCart = new ShoppingCart(loadAllItems(), barcodeList, discountList);
+  var shoppingCart = new ShoppingCart(barcodeList, discountList);
   var shoppingList = shoppingCart.getShoppingList();
 
   outputStr += '***<没钱赚商店>购物清单***\n';
