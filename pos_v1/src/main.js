@@ -60,6 +60,14 @@ function ShoppingCart(itemArray, barcodeList, discountItemArray) {
   this.getShoppingList = function(){ return _shoppingList; }; //it seem that there isn't a way to define a prototype method which can access the private member in JS. what a pity!
   this.getSumPrice = function(){ return formatMoney(_sumPrice); };
   this.getSumDiscount = function(){ return formatMoney(_sumDiscount); };
+  //validate whether the barcode exists
+  this.validateItemBarcode = function(barcodeStr) {
+    //parameter validation
+    Util.Validate.paraNumValidate(arguments, 1);
+    Util.Validate.nullValidate(arguments);
+
+    return null == selectObjectInArray(itemArray, barcodeStr, 'barcode');
+  };
 
   //#private method:
   function formatMoney(price) {
