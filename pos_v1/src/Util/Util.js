@@ -84,7 +84,7 @@ Util.Validate = (function(){
       this.paraNumValidate(arguments, 2);
       this.nullValidate(arguments);
       if(!(obj instanceof expectClass))
-        throw "ClassValidate: The object is not an instance of the expect class in funciton: " + /function\s+(\w+)/.exec(arguments.callee.caller)[1];
+        throw "ClassValidate: The object is not an instance of the expect class in function: " + /function\s+(\w+)/.exec(arguments.callee.caller)[1];
     }
   };
   return publicReturn;
