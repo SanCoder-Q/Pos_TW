@@ -10,7 +10,7 @@ Mall.PromotionManager = (function(){
   var _promotions = loadPromotions();
   var publicReturn = {
     //#public method:
-    getItemListOfAPromotion: function(promotionTypeStr) {
+    getBarcodeListOfAPromotion: function(promotionTypeStr) {
       //parameter validation
       Util.Validate.paraNumValidate(arguments, 1);
       Util.Validate.nullValidate(arguments);
@@ -24,7 +24,7 @@ Mall.PromotionManager = (function(){
       throw "Wrong promotion type: " + promotionTypeStr;
     },
 
-    getPromotionListofAnItem: function(itemBarcodeStr) {
+    getPromotionListofABarcode: function(itemBarcodeStr) {
       //parameter validation
       Util.Validate.paraNumValidate(arguments, 1);
       Util.Validate.nullValidate(arguments);
@@ -81,7 +81,7 @@ Mall.PromotionManager = (function(){
       for(var i in shoppingList) {
         var itemClass = shoppingList[i];
         //get all promotion of the item
-        var promotionList = this.getPromotionListofAnItem(i);
+        var promotionList = this.getPromotionListofABarcode(i);
 
         //遍历所有促销，更新价格。PS：没有促销优先级的情况下，直接遍历促销活动，有优先级应先排序促销活动，再进行遍历。
         for(var j in promotionList) {
